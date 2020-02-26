@@ -11,6 +11,7 @@ import * as ImagePicker from "expo-image-picker";
 import * as Permissions from "expo-permissions";
 import * as Location from "expo-location";
 import { FontAwesome } from "@expo/vector-icons";
+import Chat from "./Chat";
 
 export default class ChatContainer extends Component {
   constructor(props) {
@@ -161,7 +162,6 @@ export default class ChatContainer extends Component {
         borderRadius: 25
       },
       chatTextIcon: {
-        color: "#fff",
         flex: 1,
         marginTop: -2
       }
@@ -169,7 +169,7 @@ export default class ChatContainer extends Component {
 
     const chatView = (
       <ScrollView style={styles.chatContentContainer}>
-        <Text>This is the chat container</Text>
+        <Chat />
       </ScrollView>
     );
 
