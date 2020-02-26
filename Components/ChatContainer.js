@@ -5,19 +5,58 @@ import {
   StyleSheet,
   TextInput,
   ScrollView,
-  KeyboardAvoidingView,
-  Image
+  KeyboardAvoidingView
 } from "react-native";
-import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
+import * as ImagePicker from "expo-image-picker";
+import * as Permissions from "expo-permissions";
+import * as Location from "expo-location";
+import { FontAwesome } from "@expo/vector-icons";
 
 export default class ChatContainer extends Component {
   constructor(props) {
     super(props);
     this.state = {
       text: "",
-      isInputFocused: false
+      isInputFocused: false,
+      userInput: [],
+      image: null,
+      location: null,
+      toggleMoreIcons: false
+    };
+    this.addUserInputRef = React.createRef();
+
+    this.imageStructure = {
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 1,
+      base64: true
     };
   }
+
+  getCameraRollImage = async () => {
+    await Permissions.askAsync(Permissions.CAMERA_ROLL);
+    let result = await ImagePicker.launchImageLibraryAsync(this.imageStructure);
+
+    if (!result.cancelled) {
+      this.setState({ image: result.uri });
+    }
+  };
+
+  getCameraImage = async () => {
+    await Permissions.askAsync(Permissions.CAMERA);
+    let result = await ImagePicker.launchCameraAsync(this.imageStructure);
+
+    if (!result.cancelled) {
+      this.setState({ image: result.uri });
+    }
+  };
+
+  getLocation = async () => {
+    await Permissions.askAsync(Permissions.LOCATION);
+    let location = await Location.getCurrentPositionAsync({});
+    if (!location.cancelled) {
+      this.setState({ location });
+    }
+  };
 
   setInputFocus = () => {
     this.setState(prevState => ({
@@ -25,7 +64,41 @@ export default class ChatContainer extends Component {
     }));
   };
 
+  setInputValue = text => {
+    this.setState({
+      text
+    });
+  };
+
+  addUserInput = () => {
+    this.setState(
+      {
+        userInput: this.state.text
+      },
+      () => {
+        this.props.addinput(this.state.text);
+        this.setState({
+          text: ""
+        });
+      }
+    );
+  };
+
+  showMoreIcons = () => {
+    this.setState({
+      toggleMoreIcons: true
+    });
+  };
+
+  hideMoreIcons = () => {
+    this.setState({
+      toggleMoreIcons: false
+    });
+  };
+
   render() {
+    let { toggleMoreIcons } = this.state;
+
     const styles = StyleSheet.create({
       chatContainer: {
         backgroundColor: "#282828",
@@ -38,18 +111,16 @@ export default class ChatContainer extends Component {
       },
       chatContentContainer: {
         width: "100%",
-        height: "100%",
         flex: 3,
-        backgroundColor: "#fff",
-        borderRadius: 5
+        borderBottomWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.15)"
       },
       chatInputContainerWrapper: {
         minHeight: 50,
         marginBottom: 20
       },
       chatInputContainerWrapperFocused: {
-        minHeight: 50,
-        marginBottom: 0
+        marginBottom: 5
       },
       chatInputContainer: {
         flexDirection: "row",
@@ -57,35 +128,111 @@ export default class ChatContainer extends Component {
         alignItems: "flex-start",
         width: "100%",
         minHeight: 50,
-        borderWidth: 1,
-        borderColor: "#fff",
         borderRadius: 5,
         borderTopWidth: 0,
         borderTopLeftRadius: 0,
         borderTopRightRadius: 0
       },
       chatIconContainer: {
-        flex: 1,
         justifyContent: "center",
-        alignItems: "center"
+        alignItems: "center",
+        paddingTop: 5,
+        paddingLeft: 5
+      },
+      chatIconContainerOpen: {
+        flexDirection: "row",
+        justifyContent: "space-around",
+        height: 50,
+        paddingTop: 5
       },
       chatTextContainer: {
         position: "relative",
+        flexDirection: "row",
         width: "100%",
         flex: 3,
-        height: 50
+        height: 50,
+        paddingTop: 7
       },
       chatTextInput: {
-        minHeight: 50,
-        color: "#fff"
+        color: "#fff",
+        flex: 3,
+        paddingLeft: 15,
+        backgroundColor: "rgba(55, 57, 64, 0.85)",
+        borderRadius: 25
       },
       chatTextIcon: {
-        position: "absolute",
-        right: 10,
-        top: "30%",
-        color: "#fff"
+        color: "#fff",
+        flex: 1,
+        marginTop: -2
       }
     });
+
+    const chatView = (
+      <ScrollView style={styles.chatContentContainer}>
+        <Text>This is the chat container</Text>
+      </ScrollView>
+    );
+
+    const ctaIcons = (
+      <>
+        {!toggleMoreIcons ? (
+          <FontAwesome.Button
+            name="plus-circle"
+            backgroundColor="#282828"
+            onPress={this.showMoreIcons}
+            size={30}
+          />
+        ) : (
+          <>
+            <FontAwesome.Button
+              name="file-image-o"
+              backgroundColor="#282828"
+              onPress={this.getCameraRollImage}
+              size={30}
+            />
+            <FontAwesome.Button
+              name="camera"
+              backgroundColor="#282828"
+              onPress={this.getCameraImage}
+              size={30}
+            />
+          </>
+        )}
+      </>
+    );
+
+    const inputField = (
+      <>
+        <TextInput
+          style={[styles.chatTextInput]}
+          placeholder="Input text here!"
+          placeholderTextColor="#fff"
+          onChangeText={this.setInputValue}
+          value={this.state.text}
+          onFocus={() => {
+            this.setInputFocus();
+            this.hideMoreIcons();
+          }}
+          onBlur={this.setInputFocus}
+        />
+
+        <FontAwesome.Button
+          name="paper-plane"
+          backgroundColor="#282828"
+          onPress={this.getCameraImage}
+          size={30}
+          style={styles.chatTextIcon}
+        />
+      </>
+    );
+
+    const isInputFocused = this.state.isInputFocused
+      ? [styles.chatInputContainer, styles.chatInputContainerWrapperFocused]
+      : [styles.chatInputContainer, styles.chatInputContainerWrapper];
+
+    const toggleCtaIcons = toggleMoreIcons
+      ? styles.chatIconContainerOpen
+      : styles.chatIconContainer;
 
     return (
       <KeyboardAvoidingView
@@ -93,54 +240,11 @@ export default class ChatContainer extends Component {
         behavior="padding"
         enabled
       >
-        <ScrollView style={styles.chatContentContainer}>
-          <View>
-            {/* map chat data here */}
-            <Text>
-              {this.state.text ? this.state.text : "This is the chat container"}
-            </Text>
-          </View>
-        </ScrollView>
+        {chatView}
 
-        <View
-          style={
-            this.state.isInputFocused
-              ? styles.chatInputContainerWrapperFocused
-              : styles.chatInputContainerWrapper
-          }
-        >
-          <View style={styles.chatInputContainer}>
-            <View style={styles.chatIconContainer}>
-              <FontAwesomeIcon
-                icon="file-upload"
-                style={{
-                  position: "absolute",
-                  top: "30%",
-                  color: "#fff"
-                }}
-              />
-            </View>
-            <View style={styles.chatTextContainer}>
-              <TextInput
-                style={styles.chatTextInput}
-                placeholder="Input text here!"
-                placeholderTextColor="#fff"
-                onChangeText={text => this.setState({ text })}
-                value={this.state.text}
-                onFocus={this.setInputFocus}
-                onBlur={this.setInputFocus}
-              />
-              <FontAwesomeIcon
-                icon="paper-plane"
-                style={{
-                  position: "absolute",
-                  right: 10,
-                  top: "30%",
-                  color: "#fff"
-                }}
-              />
-            </View>
-          </View>
+        <View style={isInputFocused}>
+          <View style={toggleCtaIcons}>{ctaIcons}</View>
+          <View style={styles.chatTextContainer}>{inputField}</View>
         </View>
       </KeyboardAvoidingView>
     );
