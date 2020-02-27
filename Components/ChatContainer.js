@@ -1,10 +1,9 @@
 import React, { Component } from "react";
 import {
   View,
-  Text,
   StyleSheet,
   TextInput,
-  ScrollView,
+  Image,
   KeyboardAvoidingView
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
@@ -98,7 +97,7 @@ export default class ChatContainer extends Component {
   };
 
   render() {
-    let { toggleMoreIcons } = this.state;
+    let { toggleMoreIcons, image } = this.state;
 
     const styles = StyleSheet.create({
       chatContainer: {
@@ -126,7 +125,7 @@ export default class ChatContainer extends Component {
       chatInputContainer: {
         flexDirection: "row",
         justifyContent: "space-evenly",
-        alignItems: "flex-start",
+        alignItems: "flex-end",
         width: "100%",
         minHeight: 50,
         borderRadius: 5,
@@ -154,16 +153,22 @@ export default class ChatContainer extends Component {
         height: 50,
         paddingTop: 7
       },
+      chatTextContainerImage: {
+        width: "100%",
+        flex: 3,
+        height: 130,
+        paddingTop: 7
+      },
       chatTextInput: {
         color: "#fff",
         flex: 3,
         paddingLeft: 15,
         backgroundColor: "rgba(55, 57, 64, 0.85)",
-        borderRadius: 25
+        borderRadius: 25,
+        maxHeight: 50
       },
       chatTextIcon: {
-        flex: 1,
-        marginTop: -2
+        flex: 1
       }
     });
 
@@ -197,7 +202,7 @@ export default class ChatContainer extends Component {
       </>
     );
 
-    const inputField = (
+    const inputContent = (
       <>
         <TextInput
           style={[styles.chatTextInput]}
@@ -221,6 +226,31 @@ export default class ChatContainer extends Component {
         />
       </>
     );
+    const inputField = (
+      <>
+        {image ? (
+          <>
+            <View style={{ height: 70, padding: "2%" }}>
+              <Image
+                source={{ uri: image }}
+                style={{ width: 50, height: 50 }}
+              />
+            </View>
+
+            <View
+              style={{
+                flexDirection: "row",
+                height: 60
+              }}
+            >
+              {inputContent}
+            </View>
+          </>
+        ) : (
+          <>{inputContent}</>
+        )}
+      </>
+    );
 
     const isInputFocused = this.state.isInputFocused
       ? [styles.chatInputContainer, styles.chatInputContainerWrapperFocused]
@@ -240,7 +270,13 @@ export default class ChatContainer extends Component {
 
         <View style={isInputFocused}>
           <View style={toggleCtaIcons}>{ctaIcons}</View>
-          <View style={styles.chatTextContainer}>{inputField}</View>
+          <View
+            style={
+              image ? styles.chatTextContainerImage : styles.chatTextContainer
+            }
+          >
+            {inputField}
+          </View>
         </View>
       </KeyboardAvoidingView>
     );
