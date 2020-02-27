@@ -167,11 +167,7 @@ export default class ChatContainer extends Component {
       }
     });
 
-    const chatView = (
-      <ScrollView style={styles.chatContentContainer}>
-        <Chat />
-      </ScrollView>
-    );
+    const chatView = <Chat style={styles.chatContentContainer} />;
 
     const ctaIcons = (
       <>
