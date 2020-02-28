@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import { View, Text, FlatList, SafeAreaView, StyleSheet } from "react-native";
+import * as Animatable from "react-native-animatable";
 import Svg, { Path } from "react-native-svg";
 import { moderateScale } from "react-native-size-matters";
 
@@ -26,7 +27,8 @@ const styles = StyleSheet.create({
     marginHorizontal: "3%"
   },
   textContent: {
-    color: "#fff"
+    color: "#fff",
+    fontSize: 17
   },
   arrowContainer: {
     position: "absolute",
@@ -63,7 +65,7 @@ const rightTail = (
       width={moderateScale(15.5, 0.6)}
       height={moderateScale(17.5, 0.6)}
       viewBox="32.485 17.5 15.515 17.5"
-      enable-background="new 32.485 17.5 15.515 17.5"
+      enableBackground="new 32.485 17.5 15.515 17.5"
     >
       <Path
         d="M47.5,35c-7-4-6-8.75-6-17.5C28,17.5,29,35,48,35z"
@@ -82,7 +84,7 @@ const leftTail = (
       width={moderateScale(15.5, 0.6)}
       height={moderateScale(17.5, 0.6)}
       viewBox="32.484 17.5 15.515 17.5"
-      enable-background="new 32.485 17.5 15.515 17.5"
+      enableBackground="new 32.485 17.5 15.515 17.5"
     >
       <Path
         d="M38.7,17.5c0,8.75,1,13.5-6,17.5C51.484,35,52.484,17.5,38.484,17.5z"
@@ -94,51 +96,137 @@ const leftTail = (
   </View>
 );
 
-const Item = ({ title, type }) => {
-  return (
-    <View
-      style={[styles.text, type === "human" ? styles.userText : styles.botText]}
-    >
-      <Text style={styles.textContent}>{title}</Text>
-      {type === "human" ? rightTail : leftTail}
-    </View>
-  );
-};
-
 export default class Chat extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      messages: []
+      messages: [
+        {
+          id: "bd7acbea-c1b1-46c2-aed5-3ad53abb28ba",
+          title: "Hello and welcome to SortItOut by FX!",
+          type: "bot",
+          imageUri: ""
+        }
+      ],
+      isTyping: false
     };
   }
 
-  render() {
-    const DATA = [
-      {
-        id: "bd7acbea-c1b1-46c2-aed5-3ad53abb28ba",
-        title: "First Item",
-        type: "bot"
-      },
-      {
-        id: "3ac68afc-c605-48d3-a4f8-fbd91aa97f63",
-        title: "Second Item",
-        type: "human"
-      },
-      {
-        id: "58694a0f-3da1-471f-bd96-145571e29d72",
-        title:
-          "Lorem ipsum dolor sit amet consectetur adipisicing elit. Quibusdam architecto assumenda rem quas eius vel facere cupiditate deserunt explicabo, laborum unde, eveniet placeat libero saepe expedita nemo qui? Ratione, solutaLorem ipsum dolor sit amet consectetur adipisicing elit. Quibusdam architecto assumenda rem quas eius vel facere cupiditate deserunt explicabo, laborum unde, eveniet placeat libero saepe expedita nemo qui? Ratione, solutaLorem ipsum dolor sit amet consectetur adipisicing elit. Quibusdam architecto assumenda rem quas eius vel facere cupiditate deserunt explicabo, laborum unde, eveniet placeat libero saepe expedita nemo qui? Ratione, soluta",
-        type: "bot"
-      }
-    ];
+  componentDidUpdate(prevProps) {
+    const { messages, image } = this.props;
 
+    if (prevProps.messages !== this.props.messages) {
+      this.setState({
+        messages: [...this.state.messages, messages[0]]
+      });
+
+      if (image) {
+        const img = {
+          id: "bd7acbea-c1b1-46c2-aed5-3ad53abb28b1w",
+          title: " image title",
+          type: "bot",
+          imageUri: image
+        };
+
+        this.setState({
+          messages: [...this.state.messages, img]
+        });
+      }
+    }
+  }
+
+  Item = ({ title, type, imageUri }) => {
+    if (this.state.isTyping) {
+      setTimeout(() => {
+        this.setState({
+          isTyping: false
+        });
+      }, 10000);
+
+      return (
+        <View
+          style={[
+            styles.text,
+            type === "human" ? styles.userText : styles.botText
+          ]}
+        >
+          <Animatable.View
+            animation="bounce"
+            iterationCount="infinite"
+            easing="ease-in-out"
+            iterationDelay={10}
+            style={{
+              width: 12,
+              height: 12,
+              borderWidth: 1,
+              borderColor: "rgba(55, 57, 64, 0.87)",
+              borderRadius: "50%",
+              margin: 2,
+              backgroundColor: "grey"
+            }}
+          />
+          <Animatable.View
+            animation="bounce"
+            iterationCount="infinite"
+            easing="ease-in-out"
+            iterationDelay={10}
+            style={{
+              width: 12,
+              height: 12,
+              borderWidth: 1,
+              borderColor: "rgba(55, 57, 64, 0.87)",
+              borderRadius: "50%",
+              margin: 2,
+              backgroundColor: "grey"
+            }}
+          />
+          <Animatable.View
+            animation="bounce"
+            iterationCount="infinite"
+            easing="ease-in-out"
+            iterationDelay={10}
+            style={{
+              width: 12,
+              height: 12,
+              borderWidth: 1,
+              borderColor: "rgba(55, 57, 64, 0.87)",
+              borderRadius: "50%",
+              margin: 2,
+              backgroundColor: "grey"
+            }}
+          />
+          {type === "human" ? rightTail : leftTail}
+        </View>
+      );
+    }
+
+    return (
+      <View
+        style={[
+          styles.text,
+          type === "human" ? styles.userText : styles.botText
+        ]}
+      >
+        <Text style={styles.textContent}>{title}</Text>
+        {type === "human" ? rightTail : leftTail}
+      </View>
+    );
+  };
+
+  render() {
+    const { messages } = this.state;
     return (
       <SafeAreaView style={styles.container}>
         <FlatList
-          data={DATA}
+          data={messages}
           renderItem={({ item }) => (
-            <Item title={item.title} type={item.type} />
+            <>
+              <this.Item
+                title={item.title}
+                type={item.type}
+                imageUri={item.imageUri}
+              />
+            </>
           )}
           keyExtractor={item => item.id}
           style={{ width: "100%" }}

@@ -11,6 +11,7 @@ import * as Permissions from "expo-permissions";
 import * as Location from "expo-location";
 import { FontAwesome } from "@expo/vector-icons";
 import Chat from "./Chat";
+const axios = require("axios").default;
 
 export default class ChatContainer extends Component {
   constructor(props) {
@@ -19,16 +20,18 @@ export default class ChatContainer extends Component {
       text: "",
       isInputFocused: false,
       userInput: [],
-      image: null,
+      image: "../assets/logo.png",
       location: null,
-      toggleMoreIcons: false
+      toggleMoreIcons: false,
+      messages: []
     };
     this.addUserInputRef = React.createRef();
 
     this.imageStructure = {
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 1,
-      base64: true
+      quality: 0,
+      base64: true,
+      exif: false
     };
   }
 
@@ -37,7 +40,9 @@ export default class ChatContainer extends Component {
     let result = await ImagePicker.launchImageLibraryAsync(this.imageStructure);
 
     if (!result.cancelled) {
-      this.setState({ image: result.uri });
+      this.setState({ image: result }, () => {
+        this.postImage(this.state.image.base64);
+      });
     }
   };
 
@@ -46,7 +51,9 @@ export default class ChatContainer extends Component {
     let result = await ImagePicker.launchCameraAsync(this.imageStructure);
 
     if (!result.cancelled) {
-      this.setState({ image: result.uri });
+      this.setState({ image: result }, () => {
+        this.postImage(this.state.image.base64);
+      });
     }
   };
 
@@ -56,6 +63,21 @@ export default class ChatContainer extends Component {
     if (!location.cancelled) {
       this.setState({ location });
     }
+  };
+
+  postImage = image => {
+    const imageData = "data:image/jpeg;base64," + image;
+
+    axios
+      .post("https://e22a768c.ngrok.io/services/create-image-url", {
+        file: imageData
+      })
+      .then(function(response) {
+        console.log(response);
+      })
+      .catch(function(error) {
+        console.log(error);
+      });
   };
 
   setInputFocus = () => {
@@ -71,17 +93,28 @@ export default class ChatContainer extends Component {
   };
 
   addUserInput = () => {
-    this.setState(
-      {
-        userInput: this.state.text
-      },
-      () => {
-        this.props.addinput(this.state.text);
-        this.setState({
-          text: ""
-        });
-      }
-    );
+    const { text } = this.state;
+    if (text) {
+      this.setState(
+        {
+          userInput: this.state.text,
+          messages: [
+            {
+              id: Math.random()
+                .toString(36)
+                .replace("0.", "bd7acbea-c1b1-46c2-aed5" || ""),
+              title: this.state.text,
+              type: "human"
+            }
+          ]
+        },
+        () => {
+          this.setState({
+            text: ""
+          });
+        }
+      );
+    }
   };
 
   showMoreIcons = () => {
@@ -97,7 +130,7 @@ export default class ChatContainer extends Component {
   };
 
   render() {
-    let { toggleMoreIcons, image } = this.state;
+    let { toggleMoreIcons, image, messages } = this.state;
 
     const styles = StyleSheet.create({
       chatContainer: {
@@ -172,33 +205,31 @@ export default class ChatContainer extends Component {
       }
     });
 
-    const chatView = <Chat style={styles.chatContentContainer} />;
+    const chatView = (
+      <Chat style={styles.chatContentContainer} messages={messages} />
+    );
 
-    const ctaIcons = (
+    const ctaIcons = !toggleMoreIcons ? (
+      <FontAwesome.Button
+        name="plus-circle"
+        backgroundColor="#282828"
+        onPress={this.showMoreIcons}
+        size={30}
+      />
+    ) : (
       <>
-        {!toggleMoreIcons ? (
-          <FontAwesome.Button
-            name="plus-circle"
-            backgroundColor="#282828"
-            onPress={this.showMoreIcons}
-            size={30}
-          />
-        ) : (
-          <>
-            <FontAwesome.Button
-              name="file-image-o"
-              backgroundColor="#282828"
-              onPress={this.getCameraRollImage}
-              size={30}
-            />
-            <FontAwesome.Button
-              name="camera"
-              backgroundColor="#282828"
-              onPress={this.getCameraImage}
-              size={30}
-            />
-          </>
-        )}
+        <FontAwesome.Button
+          name="file-image-o"
+          backgroundColor="#282828"
+          onPress={this.getCameraRollImage}
+          size={30}
+        />
+        <FontAwesome.Button
+          name="camera"
+          backgroundColor="#282828"
+          onPress={this.getCameraImage}
+          size={30}
+        />
       </>
     );
 
@@ -220,36 +251,34 @@ export default class ChatContainer extends Component {
         <FontAwesome.Button
           name="paper-plane"
           backgroundColor="#282828"
-          onPress={this.getCameraImage}
+          onPress={this.addUserInput}
           size={30}
           style={styles.chatTextIcon}
         />
       </>
     );
-    const inputField = (
+    const inputField = image ? (
       <>
-        {image ? (
-          <>
-            <View style={{ height: 70, padding: "2%" }}>
-              <Image
-                source={{ uri: image }}
-                style={{ width: 50, height: 50 }}
-              />
-            </View>
+        <View style={{ height: 100, padding: "2%" }}>
+          <Image
+            source={require("../assets/logo.png")}
+            style={{ width: 50, height: 50 }}
+          />
+        </View>
 
-            <View
-              style={{
-                flexDirection: "row",
-                height: 60
-              }}
-            >
-              {inputContent}
-            </View>
-          </>
-        ) : (
-          <>{inputContent}</>
-        )}
+        <View
+          style={{
+            flexDirection: "row",
+            height: 60,
+            borderWidth: 1,
+            borderColor: "#fff"
+          }}
+        >
+          {inputContent}
+        </View>
       </>
+    ) : (
+      { inputContent }
     );
 
     const isInputFocused = this.state.isInputFocused
